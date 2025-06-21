@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/saat-formu/static/css/main.f923a0b7.css",
+    "main.js": "/saat-formu/static/js/main.817bf34d.js",
+    "index.html": "/saat-formu/index.html",
+    "main.f923a0b7.css.map": "/saat-formu/static/css/main.f923a0b7.css.map",
+    "main.817bf34d.js.map": "/saat-formu/static/js/main.817bf34d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f923a0b7.css",
+    "static/js/main.817bf34d.js"
+  ]
+}
