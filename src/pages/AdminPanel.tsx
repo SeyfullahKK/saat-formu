@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { WorkEntry } from '../types';
 import AdminLogin from '../components/AdminLogin';
+import { subscribeToWorkEntries, deleteWorkEntry, deleteAllWorkEntries } from '../services/workEntryService';
 
 const AdminPanel: React.FC = () => {
   const [entries, setEntries] = useState<WorkEntry[]>([]);
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'hours'>('date');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Giriş durumunu kontrol et
@@ -15,9 +17,15 @@ const AdminPanel: React.FC = () => {
     setIsLoggedIn(loggedIn);
     
     if (loggedIn) {
-      // localStorage'dan verileri al
-      const storedEntries = JSON.parse(localStorage.getItem('workEntries') || '[]');
-      setEntries(storedEntries);
+      // Firebase'den verileri dinle (realtime)
+      const unsubscribe = subscribeToWorkEntries((data) => {
+        setEntries(data);
+      });
+
+      // Cleanup: component unmount olduğunda dinlemeyi durdur
+      return () => {
+        unsubscribe();
+      };
     }
   }, [isLoggedIn]);
 
@@ -43,19 +51,32 @@ const AdminPanel: React.FC = () => {
   });
 
   // Kaydı silme fonksiyonu
-  const deleteEntry = (id: string) => {
+  const handleDeleteEntry = async (id: string) => {
     if (window.confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
-      const updatedEntries = entries.filter(entry => entry.id !== id);
-      setEntries(updatedEntries);
-      localStorage.setItem('workEntries', JSON.stringify(updatedEntries));
+      setIsLoading(true);
+      try {
+        await deleteWorkEntry(id);
+      } catch (error) {
+        alert('Kayıt silinirken bir hata oluştu.');
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   // Tüm kayıtları temizleme
-  const clearAllEntries = () => {
+  const handleClearAllEntries = async () => {
     if (window.confirm('TÜM KAYITLARI silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
-      setEntries([]);
-      localStorage.removeItem('workEntries');
+      setIsLoading(true);
+      try {
+        await deleteAllWorkEntries();
+      } catch (error) {
+        alert('Kayıtlar silinirken bir hata oluştu.');
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -90,6 +111,13 @@ const AdminPanel: React.FC = () => {
                 Çıkış Yap
               </button>
             </div>
+          </div>
+
+          {/* Realtime güncelleme bildirimi */}
+          <div className="mb-4 text-center">
+            <p className="text-sm text-green-600 font-medium">
+              ✓ Canlı güncelleme aktif - Tüm kayıtlar anlık olarak güncelleniyor
+            </p>
           </div>
 
           {/* Filtre ve Sıralama */}
@@ -150,8 +178,13 @@ const AdminPanel: React.FC = () => {
                       <td className="p-3">{entry.date}</td>
                       <td className="p-3">
                         <button
-                          onClick={() => deleteEntry(entry.id)}
-                          className="text-red-600 hover:text-red-800 transition duration-200"
+                          onClick={() => handleDeleteEntry(entry.id)}
+                          disabled={isLoading}
+                          className={`transition duration-200 ${
+                            isLoading 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-red-600 hover:text-red-800'
+                          }`}
                         >
                           Sil
                         </button>
@@ -171,10 +204,15 @@ const AdminPanel: React.FC = () => {
           {entries.length > 0 && (
             <div className="mt-6 text-center">
               <button
-                onClick={clearAllEntries}
-                className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-200"
+                onClick={handleClearAllEntries}
+                disabled={isLoading}
+                className={`px-6 py-2 rounded-lg transition duration-200 ${
+                  isLoading
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
               >
-                Tüm Kayıtları Temizle
+                {isLoading ? 'İşleniyor...' : 'Tüm Kayıtları Temizle'}
               </button>
             </div>
           )}

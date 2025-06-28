@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { WorkEntry } from '../types';
+import { addWorkEntry } from '../services/workEntryService';
 
 const EmployeeForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,8 +9,9 @@ const EmployeeForm: React.FC = () => {
     jobTitle: '',
     hours: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Form doğrulama
@@ -19,35 +20,37 @@ const EmployeeForm: React.FC = () => {
       return;
     }
 
-    // Yeni giriş oluştur
-    const newEntry: WorkEntry = {
-      id: Date.now().toString(),
-      name: formData.name,
-      surname: formData.surname,
-      jobTitle: formData.jobTitle,
-      hours: formData.hours as any, // Type'ı any olarak değiştir
-      date: new Date().toLocaleDateString('tr-TR'),
-      timestamp: Date.now()
-    };
+    setIsLoading(true);
 
-    // Mevcut kayıtları al
-    const existingEntries = JSON.parse(localStorage.getItem('workEntries') || '[]');
-    
-    // Yeni kaydı ekle
-    const updatedEntries = [...existingEntries, newEntry];
-    
-    // localStorage'a kaydet
-    localStorage.setItem('workEntries', JSON.stringify(updatedEntries));
+    try {
+      // Yeni giriş oluştur
+      const newEntry = {
+        name: formData.name,
+        surname: formData.surname,
+        jobTitle: formData.jobTitle,
+        hours: formData.hours,
+        date: new Date().toLocaleDateString('tr-TR'),
+        timestamp: Date.now()
+      };
 
-    // Formu temizle
-    setFormData({
-      name: '',
-      surname: '',
-      jobTitle: '',
-      hours: ''
-    });
+      // Firebase'e kaydet
+      await addWorkEntry(newEntry);
 
-    alert('Kayıt başarıyla eklendi!');
+      // Formu temizle
+      setFormData({
+        name: '',
+        surname: '',
+        jobTitle: '',
+        hours: ''
+      });
+
+      alert('Kayıt başarıyla eklendi!');
+    } catch (error) {
+      alert('Kayıt eklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +85,7 @@ const EmployeeForm: React.FC = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Adınızı girin"
+              disabled={isLoading}
             />
           </div>
 
@@ -96,6 +100,7 @@ const EmployeeForm: React.FC = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Soyadınızı girin"
+              disabled={isLoading}
             />
           </div>
 
@@ -110,6 +115,7 @@ const EmployeeForm: React.FC = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Konunuzu girin"
+              disabled={isLoading}
             />
           </div>
 
@@ -124,14 +130,20 @@ const EmployeeForm: React.FC = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Örn: 8.5 veya 15:30:00"
+              disabled={isLoading}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+            disabled={isLoading}
+            className={`w-full py-2 px-4 rounded-md font-medium transition duration-200 ${
+              isLoading 
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            Kaydet
+            {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
           </button>
         </form>
 
