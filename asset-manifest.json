@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/saat-formu/static/css/main.f923a0b7.css",
-    "main.js": "/saat-formu/static/js/main.817bf34d.js",
+    "main.css": "/saat-formu/static/css/main.6581f961.css",
+    "main.js": "/saat-formu/static/js/main.50f45516.js",
     "index.html": "/saat-formu/index.html",
-    "main.f923a0b7.css.map": "/saat-formu/static/css/main.f923a0b7.css.map",
-    "main.817bf34d.js.map": "/saat-formu/static/js/main.817bf34d.js.map"
+    "main.6581f961.css.map": "/saat-formu/static/css/main.6581f961.css.map",
+    "main.50f45516.js.map": "/saat-formu/static/js/main.50f45516.js.map"
   },
   "entrypoints": [
-    "static/css/main.f923a0b7.css",
-    "static/js/main.817bf34d.js"
+    "static/css/main.6581f961.css",
+    "static/js/main.50f45516.js"
   ]
 }
